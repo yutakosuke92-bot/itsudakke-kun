@@ -1,0 +1,17 @@
+{
+  "name": "家事解決くん",
+  "short_name": "家事解決",
+  "description": "いつだっけ？を解決する優しいリマインダー",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fffbf5",
+  "theme_color": "#ff9a9e",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/599/599370.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="manifest" href="manifest.json">
+    <title>家事の「いつだっけ？」解決くん</title>
+    <style>
+        :root {
+            /* Default: ふんわり (Soft) */
+            --primary-bg: #fffbf5;
+            --card-bg: #ffffff;
+            --accent-color: #ff9a9e;
+            --secondary-accent: #fad0c4;
+            --text-main: #5d5d5d;
+            --text-light: #8e8e8e;
+            --shadow: 0 4px 15px rgba(255, 154, 158, 0.1);
+            --radius: 20px;
+            --nav-bg: #f0e6dd;
+            --slider-bg: #fdfaf7;
+        }
+
+        [data-theme="calm"] {
+            --primary-bg: #1a1c1e;
+            --card-bg: #2d2f31;
+            --accent-color: #ffb4b9;
+            --secondary-accent: #4a4d51;
+            --text-main: #f1f1f1;
+            --text-light: #a0a0a0;
+            --shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            --nav-bg: #111111;
+            --slider-bg: #1a1c1e;
+        }
+
+        [data-theme="natural"] {
+            --primary-bg: #eef2e7;
+            /* More muted, sage-beige green */
+            --card-bg: #ffffff;
+            --accent-color: #7ba644;
+            /* Slightly deeper green for better contrast */
+            --secondary-accent: #d3dbca;
+            --text-main: #3e4a32;
+            --text-light: #6c7a5f;
+            --shadow: 0 4px 15px rgba(62, 74, 50, 0.08);
+            --nav-bg: #dae2d0;
+            --slider-bg: #f5f7f1;
+        }
+
+        * {
+            box-sizing: border-box;
+            appearance: none;
+            -webkit-appearance: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: var(--accent-color);
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: 15px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .icon-btn {
+            background: var(--card-bg);
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: transform 0.2s;
+            border: none;
+        }
+
+        .icon-btn:active {
+            transform: scale(0.9);
+        }
+
+        .icon-btn.active {
+            border: 2px solid var(--accent-color);
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: var(--nav-bg);
+            padding: 5px;
+            border-radius: 25px;
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto 25px;
+        }
+
+        .nav-tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--text-light);
+        }
+
+        .nav-tab.active {
+            background: var(--card-bg);
+            color: var(--accent-color);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding-bottom: 100px;
+        }
+
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .task-card {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        .category-label {
+            font-size: 0.65rem;
+            color: var(--accent-color);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .task-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .task-meta {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .status-due {
+            background: #ffebeb;
+            color: #ff6b6b;
+        }
+
+        .status-ok {
+            background: #e8fbf0;
+            color: #2ecc71;
+        }
+
+        .status-future {
+            background: #f0f0f0;
+            color: #888;
+        }
+
+        .advice-box {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            font-style: italic;
+            margin-top: 10px;
+            padding-left: 10px;
+            border-left: 3px solid var(--secondary-accent);
+        }
+
+        .slider-section {
+            margin: 15px 0;
+            background: var(--slider-bg);
+            padding: 12px;
+            border-radius: 15px;
+        }
+
+        .slider-label {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .slider-value {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .guide-text {
+            font-size: 0.65rem;
+            color: var(--text-light);
+            opacity: 0.7;
+            margin-top: 4px;
+            display: block;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            background: #eee;
+            border-radius: 5px;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .btn-complete {
+            background: var(--accent-color);
+            color: white;
+            box-shadow: 0 4px 10px rgba(255, 154, 158, 0.2);
+        }
+
+        .btn-tomorrow {
+            background: #eee;
+            color: #888;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 30px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .form-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            font-size: 1rem;
+            color: var(--text-main);
+            background: var(--card-bg);
+        }
+
+        .form-inline {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: var(--accent-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 8px 20px rgba(255, 154, 158, 0.4);
+            font-size: 2rem;
+            cursor: pointer;
+            z-index: 100;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide-up {
+            animation: slideUp 0.4s ease-out forwards;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>家事の「いつだっけ？」解決くん</h1>
+        <p class="subtitle" id="dynamic-subtitle">忘れても大丈夫、あなたは毎日頑張っています。 ✨</p>
+        <div class="controls">
+            <button class="icon-btn" onclick="setTheme('soft')" id="theme-soft" title="ふんわり">☀️</button>
+            <button class="icon-btn" onclick="setTheme('calm')" id="theme-calm" title="落ち着き">🌙</button>
+            <button class="icon-btn" onclick="setTheme('natural')" id="theme-natural" title="ナチュラル">🌿</button>
+            <button class="icon-btn" onclick="toggleNotifications()" id="notif-btn" title="通知設定">🔔</button>
+        </div>
+        <div class="nav-tabs">
+            <div class="nav-tab active" id="tab-today" onclick="switchView('today')">やること</div>
+            <div class="nav-tab" id="tab-dashboard" onclick="switchView('dashboard')">設定一覧</div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="view-today" class="view active">
+            <div id="today-list" class="task-list"></div>
+        </div>
+        <div id="view-dashboard" class="view">
+            <div id="dashboard-list" class="task-list"></div>
+            <div style="margin-top: 30px; text-align: center;">
+                <button class="btn-tomorrow" style="width: auto; padding: 12px 24px; font-size: 0.8rem; opacity: 0.7;"
+                    onclick="resetTasks()">初期設定（20項目）に戻す</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="feedback-overlay" class="modal-overlay" onclick="closeModal('feedback-overlay')">
+        <div class="modal-content slide-up" onclick="event.stopPropagation()">
+            <p id="praise-text"
+                style="font-size: 1.4rem; color: var(--accent-color); font-weight: bold; margin-bottom: 10px;"></p>
+            <p style="margin-bottom: 25px;">これでまた家族が快適に過ごせますね ☺️</p>
+            <button class="btn-complete" onclick="closeModal('feedback-overlay')">ありがとう！</button>
+        </div>
+    </div>
+
+    <div id="add-modal" class="modal-overlay">
+        <div class="modal-content slide-up">
+            <h2 style="color: var(--accent-color); margin-top: 0;">新しい家事を追加</h2>
+            <div class="form-group">
+                <label>家事の名前</label>
+                <input type="text" id="new-task-name" placeholder="例：トイレの層洗浄">
+            </div>
+            <div class="form-group">
+                <label>繰り返す周期</label>
+                <div class="form-inline">
+                    <input type="number" id="new-task-value" value="1" min="1" max="99" style="flex:1;">
+                    <select id="new-task-unit" style="flex:1.5;">
+                        <option value="days">日おき</option>
+                        <option value="weeks" selected>週間おき</option>
+                        <option value="months">ヶ月おき</option>
+                        <option value="years">年おき</option>
+                    </select>
+                </div>
+                <span class="guide-text" id="add-guide"></span>
+            </div>
+            <button class="btn-complete" onclick="addTask()">保存する</button>
+            <button class="btn-tomorrow" style="margin-top:10px;" onclick="closeModal('add-modal')">キャンセル</button>
+        </div>
+    </div>
+
+    <div class="fab" id="fab-plus" onclick="showModal('add-modal')">+</div>
+
+    <script>
+        const STANDARD_GUIDES = {
+            '浄水器': { val: 4, unit: 'months', text: '4ヶ月' },
+            '製氷機': { val: 1, unit: 'months', text: '1ヶ月' },
+            '食洗機': { val: 1, unit: 'weeks', text: '1週間' },
+            '換気扇': { val: 2, unit: 'months', text: '2ヶ月' },
+            '冷蔵庫': { val: 6, unit: 'months', text: '6ヶ月' },
+            '防カビ': { val: 2, unit: 'months', text: '2ヶ月' },
+            '排水溝': { val: 1, unit: 'weeks', text: '1週間' },
+            '洗濯槽': { val: 2, unit: 'months', text: '2ヶ月' },
+            '通気口': { val: 1, unit: 'months', text: '1ヶ月' },
+            'トイレ': { val: 1, unit: 'months', text: '1ヶ月' },
+            'エアコン': { val: 1, unit: 'months', text: '1ヶ月' },
+            '空気清浄機': { val: 1, unit: 'months', text: '1ヶ月' },
+            '加湿器': { val: 2, unit: 'weeks', text: '2週間' },
+            '掃除機': { val: 1, unit: 'months', text: '1ヶ月' },
+            'カーテン': { val: 6, unit: 'months', text: '6ヶ月' },
+            'オイル': { val: 6, unit: 'months', text: '6ヶ月' },
+            '洗車': { val: 1, unit: 'months', text: '1ヶ月' },
+            '自転車': { val: 1, unit: 'months', text: '1ヶ月' },
+            '火災報知器': { val: 1, unit: 'years', text: '1年' },
+            '防災': { val: 1, unit: 'years', text: '1年' }
+        };
+
+        const INITIAL_PRESETS = [
+            { id: 101, name: '浄水器カートリッジ交換', category: 'キッチン', val: 4, unit: 'months', advice: '美味しいお水のために', order: 1 },
+            { id: 102, name: '製氷機の給水タンク掃除', category: 'キッチン', val: 1, unit: 'months', advice: 'お氷も清潔が一番ですね', order: 2 },
+            { id: 103, name: '食洗機フィルター掃除', category: 'キッチン', val: 1, unit: 'weeks', advice: '溜まった汚れをスッキリ落としましょう', order: 3 },
+            { id: 104, name: '換気扇フィルター交換', category: 'キッチン', val: 2, unit: 'months', advice: 'ベタつきが溜まる前に', order: 4 },
+            { id: 105, name: '冷蔵庫の脱臭剤交換', category: 'キッチン', val: 6, unit: 'months', advice: '開けるたび爽やかに', order: 5 },
+            { id: 201, name: 'お風呂の防カビくん煙剤', category: '水回り', val: 2, unit: 'months', advice: 'カビさんサヨナラ🌿', order: 6 },
+            { id: 202, name: '排水溝ネットの定期交換', category: '水回り', val: 1, unit: 'weeks', advice: 'ヌメリを防いで清潔に', order: 7 },
+            { id: 203, name: '洗濯槽クリーナー掃除', category: '水回り', val: 2, unit: 'months', advice: 'お洋服も喜びます', order: 8 },
+            { id: 204, name: 'お風呂の通気口ホコリ取り', category: '水回り', val: 1, unit: 'months', advice: '空気の通り道をキレイに', order: 9 },
+            { id: 205, name: 'トイレの脱臭フィルター掃除', category: '水回り', val: 1, unit: 'months', advice: '見えない場所ほど大切に', order: 10 },
+            { id: 301, name: 'エアコンフィルター掃除', category: 'リビング', val: 1, unit: 'months', advice: '光熱費の節約にもつながりますよ', order: 11 },
+            { id: 302, name: '空気清浄機フィルター掃除', category: 'リビング', val: 1, unit: 'months', advice: 'きれいな空気でリラックス', order: 12 },
+            { id: 303, name: '加湿器トレー・フィルター掃除', category: 'リビング', val: 2, unit: 'weeks', advice: '水垢を防いで潤いキープ', order: 13 },
+            { id: 304, name: '掃除機フィルター掃除', category: 'リビング', val: 1, unit: 'months', advice: '吸引力を維持しましょう', order: 14 },
+            { id: 305, name: 'カーテンの洗濯', category: 'リビング', val: 6, unit: 'months', advice: 'お部屋がパッと明るくなります', order: 15 },
+            { id: 401, name: '車のオイル交換', category: '外回り', val: 6, unit: 'months', advice: '愛車も長く大切に', order: 16 },
+            { id: 402, name: '車の洗車', category: '外回り', val: 1, unit: 'months', advice: 'ピカピカでドライブも楽しく', order: 17 },
+            { id: 403, name: '自転車の空気入れ', category: '外回り', val: 1, unit: 'months', advice: 'スイスイ進んで快適に', order: 18 },
+            { id: 404, name: '火災報知器の点検', category: '防災', val: 1, unit: 'years', advice: '家族の安全を願って', order: 19 },
+            { id: 405, name: '防災リュックの期限チェック', category: '防災', val: 1, unit: 'years', advice: '備えあれば憂いなしですね', order: 20 }
+        ];
+
+        let tasks = JSON.parse(localStorage.getItem('houseworkTasks')) || INITIAL_PRESETS.map(p => ({
+            ...p, lastDone: null, nextDue: new Date().toISOString()
+        }));
+
+        // Migrating old tasks that only have intervalWeeks
+        tasks = tasks.map(t => {
+            if (t.intervalWeeks && !t.unit) {
+                t.val = t.intervalWeeks;
+                t.unit = 'weeks';
+                delete t.intervalWeeks;
+            }
+            return t;
+        });
+
+        let currentTheme = localStorage.getItem('houseworkTheme') || 'soft';
+        let currentView = 'today';
+
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            currentTheme = theme; localStorage.setItem('houseworkTheme', theme);
+            document.querySelectorAll('.icon-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`theme-${theme}`).classList.add('active');
+        }
+
+        async function toggleNotifications() {
+            if (!('Notification' in window)) return alert('非対応ブラウザです');
+            const p = await Notification.requestPermission();
+            if (p === 'granted') { alert('通知オン！朝にお知らせします☺️'); document.getElementById('notif-btn').classList.add('active'); }
+        }
+
+        function switchView(viewName) {
+            currentView = viewName;
+            document.getElementById('tab-today').classList.toggle('active', viewName === 'today');
+            document.getElementById('tab-dashboard').classList.toggle('active', viewName === 'dashboard');
+            document.getElementById('view-today').classList.toggle('active', viewName === 'today');
+            document.getElementById('view-dashboard').classList.toggle('active', viewName === 'dashboard');
+            document.getElementById('dynamic-subtitle').innerText = (viewName === 'today') ?
+                "忘れても大丈夫、あなたは毎日頑張っています。 ✨" : "登録されている家事の一覧です。いつでも調整できます 🌿";
+            document.getElementById('fab-plus').style.display = (viewName === 'today') ? 'flex' : 'none';
+            render();
+        }
+
+        function calculateNextDue(lastDoneStr, val, unit) {
+            const base = lastDoneStr ? new Date(lastDoneStr) : new Date();
+            const next = new Date(base);
+            const num = parseInt(val);
+            if (unit === 'days') next.setDate(next.getDate() + num);
+            else if (unit === 'weeks') next.setDate(next.getDate() + (num * 7));
+            else if (unit === 'months') next.setMonth(next.getMonth() + num);
+            else if (unit === 'years') next.setFullYear(next.getFullYear() + num);
+            return next.toISOString();
+        }
+
+        function render() {
+            const listId = (currentView === 'today') ? 'today-list' : 'dashboard-list';
+            const list = document.getElementById(listId); list.innerHTML = '';
+            const filtered = (currentView === 'today') ? tasks.filter(t => new Date(t.nextDue) <= new Date()) : tasks;
+            if (filtered.length === 0 && currentView === 'today') list.innerHTML = '<div style="text-align:center; padding:50px; opacity:0.6;">今はやることはありません。ゆっくり休んでくださいね 🍵</div>';
+            else filtered.sort((a, b) => a.order - b.order).forEach(t => list.appendChild(createCard(t, currentView === 'today')));
+            localStorage.setItem('houseworkTasks', JSON.stringify(tasks));
+        }
+
+        function formatIntervalText(val, unit) {
+            const unitMap = { days: '日', weeks: '週間', months: 'ヶ月', years: '年' };
+            return `${val}${unitMap[unit]}おき`;
+        }
+
+        function createCard(task, showActions) {
+            const card = document.createElement('div'); card.className = 'task-card slide-up';
+            const isDue = new Date(task.nextDue) <= new Date();
+            const dateStr = new Date(task.nextDue).toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' });
+            const guideKey = Object.keys(STANDARD_GUIDES).find(k => task.name.includes(k));
+            const adviceText = task.advice || "ご家庭のペースで大丈夫ですよ☺️";
+            const maxVal = task.unit === 'days' ? 31 : (task.unit === 'weeks' ? 52 : (task.unit === 'months' ? 24 : 10));
+
+            card.innerHTML = `
+                ${task.category ? `<span class="category-label">${task.category}</span>` : ''}
+                <span class="task-name">${task.name}</span>
+                <div class="task-meta">
+                    次回目安: ${dateStr} 
+                    <span class="status-badge ${isDue ? 'status-due' : 'status-future'}">${isDue ? 'そろそろかな？' : 'まだ先です'}</span>
+                </div>
+                <div class="advice-box">${adviceText}</div>
+                <div class="slider-section">
+                    <div class="slider-label">
+                        <span>周期を調整 ${guideKey ? `<span class="guide-text">標準: ${STANDARD_GUIDES[guideKey].text}</span>` : ''}</span>
+                        <span class="slider-value">${formatIntervalText(task.val, task.unit)}</span>
+                    </div>
+                    <input type="range" min="1" max="${maxVal}" value="${task.val}" oninput="updateInterval(${task.id}, this.value)">
+                </div>
+                ${showActions ? `<div class="btn-group">
+                    <button class="btn-complete" onclick="completeTask(${task.id})">やったよ！</button>
+                    <button class="btn-tomorrow" onclick="postponeTask(${task.id})">明日やる</button>
+                </div>` : ''}`;
+            return card;
+        }
+
+        function updateInterval(id, val) {
+            const t = tasks.find(x => x.id === id);
+            t.val = parseInt(val);
+            t.nextDue = calculateNextDue(t.lastDone, t.val, t.unit);
+            clearTimeout(window.rt); window.rt = setTimeout(render, 150);
+        }
+
+        function completeTask(id) {
+            const t = tasks.find(x => x.id === id);
+            t.lastDone = new Date().toISOString();
+            t.nextDue = calculateNextDue(t.lastDone, t.val, t.unit);
+            document.getElementById('praise-text').innerText = ["最高です✨", "整いました🌿", "素敵です！", "お疲れ様☺️"][Math.floor(Math.random() * 4)];
+            showModal('feedback-overlay'); render();
+        }
+
+        function postponeTask(id) {
+            const t = tasks.find(x => x.id === id);
+            const tmw = new Date(); tmw.setDate(tmw.getDate() + 1);
+            t.nextDue = tmw.toISOString(); render();
+        }
+
+        function showModal(id) {
+            document.getElementById(id).style.display = 'flex';
+            if (id === 'add-modal') {
+                document.getElementById('new-task-name').oninput = e => {
+                    const g = Object.keys(STANDARD_GUIDES).find(k => e.target.value.includes(k));
+                    document.getElementById('add-guide').innerText = g ? `標準目安: ${STANDARD_GUIDES[g].text}` : '';
+                };
+            }
+        }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function addTask() {
+            const name = document.getElementById('new-task-name').value;
+            const val = parseInt(document.getElementById('new-task-value').value);
+            const unit = document.getElementById('new-task-unit').value;
+            if (!name) return;
+            const newTask = {
+                id: Date.now(),
+                name,
+                val,
+                unit,
+                category: '自分流',
+                order: tasks.length + 1,
+                lastDone: null,
+                advice: 'ご家庭のペースで大丈夫ですよ☺️'
+            };
+            newTask.nextDue = calculateNextDue(null, val, unit);
+            tasks.push(newTask);
+            closeModal('add-modal'); render();
+        }
+
+        function resetTasks() {
+            if (confirm("家事リストを初期設定（20項目）に戻しますか？\n※ご自身で追加・変更した内容は消えてしまいます。")) {
+                localStorage.removeItem('houseworkTasks');
+                location.reload();
+            }
+        }
+
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
+        setTheme(currentTheme); render();
+    </script>
+</body>
+
+</html>
