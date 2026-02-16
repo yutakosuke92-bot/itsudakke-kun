@@ -529,9 +529,7 @@
         }
 
         async function toggleNotifications() {
-            if (!('Notification' in window)) return alert('非対応ブラウザです');
-            const p = await Notification.requestPermission();
-            if (p === 'granted') { alert('通知オン！朝にお知らせします☺️'); document.getElementById('notif-btn').classList.add('active'); }
+            alert('通知機能は現在準備中です。ホーム画面に追加してご利用いただくと、今後のアップデートで対応予定です☺️');
         }
 
         function switchView(viewName) {
@@ -592,7 +590,10 @@
                         <span>周期を調整 ${guideKey ? `<span class="guide-text">標準: ${STANDARD_GUIDES[guideKey].text}</span>` : ''}</span>
                         <span class="slider-value">${formatIntervalText(task.val, task.unit)}</span>
                     </div>
-                    <input type="range" min="1" max="${maxVal}" value="${task.val}" oninput="updateInterval(${task.id}, this.value)">
+                    <input type="range" min="1" max="${maxVal}" value="${task.val}" 
+                        oninput="updateInterval(${task.id}, this.value)" 
+                        ontouchstart="event.stopPropagation()" 
+                        onmousedown="event.stopPropagation()">
                 </div>
                 ${showActions ? `<div class="btn-group">
                     <button class="btn-complete" onclick="completeTask(${task.id})">やったよ！</button>
