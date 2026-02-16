@@ -588,13 +588,14 @@
                 <div class="slider-section">
                     <div class="slider-label">
                         <span>周期を調整 ${guideKey ? `<span class="guide-text">標準: ${STANDARD_GUIDES[guideKey].text}</span>` : ''}</span>
-                        <span class="slider-value">${formatIntervalText(task.val, task.unit)}</span>
+                        <span class="slider-value" id="val-${task.id}">${formatIntervalText(task.val, task.unit)}</span>
                     </div>
                     <input type="range" min="1" max="${maxVal}" value="${task.val}" 
-                        style="touch-action: pan-y;"
+                        style="touch-action: none; cursor: grab;"
                         oninput="updateInterval(${task.id}, this.value)" 
+                        onchange="render()"
                         ontouchstart="event.stopPropagation()" 
-                        ontouchmove="event.stopPropagation()" 
+                        ontouchmove="event.stopPropagation(); event.preventDefault();" 
                         onmousedown="event.stopPropagation()">
                 </div>
                 ${showActions ? `<div class="btn-group">
@@ -608,7 +609,10 @@
             const t = tasks.find(x => x.id === id);
             t.val = parseInt(val);
             t.nextDue = calculateNextDue(t.lastDone, t.val, t.unit);
-            clearTimeout(window.rt); window.rt = setTimeout(render, 150);
+            // Update only the label text immediately to avoid layout jumps
+            const label = document.getElementById(`val-${id}`);
+            if (label) label.innerText = formatIntervalText(t.val, t.unit);
+            // State is saved in render() which is called on 'change'
         }
 
         function completeTask(id) {
