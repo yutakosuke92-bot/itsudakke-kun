@@ -591,11 +591,11 @@
                         <span class="slider-value" id="val-${task.id}">${formatIntervalText(task.val, task.unit)}</span>
                     </div>
                     <input type="range" min="1" max="${maxVal}" value="${task.val}" 
-                        style="touch-action: none; cursor: grab;"
+                        style="touch-action: pan-y; cursor: grab;"
                         oninput="updateInterval(${task.id}, this.value)" 
                         onchange="render()"
                         ontouchstart="event.stopPropagation()" 
-                        ontouchmove="event.stopPropagation(); event.preventDefault();" 
+                        ontouchmove="event.stopPropagation()" 
                         onmousedown="event.stopPropagation()">
                 </div>
                 ${showActions ? `<div class="btn-group">
