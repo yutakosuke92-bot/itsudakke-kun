@@ -598,6 +598,7 @@
                     <span class="status-badge ${isDue ? 'status-due' : 'status-future'}">${isDue ? 'そろそろかな？' : 'まだ先です'}</span>
                 </div>
                 <div class="advice-box">${adviceText}</div>
+                ${!showActions ? `
                 <div class="slider-section">
                     <div class="slider-label">
                         <span>周期を調整 ${guideKey ? `<span class="guide-text">標準: ${STANDARD_GUIDES[guideKey].text}</span>` : ''}</span>
@@ -614,7 +615,11 @@
                         ontouchmove="event.stopPropagation()" 
                         ontouchend="event.stopPropagation()"
                         onmousedown="event.stopPropagation()">
+                </div>` : `
+                <div style="margin-top: 12px; font-size: 0.85rem; color: var(--accent-color); font-weight: bold;">
+                    周期: ${formatIntervalText(task.val, task.unit)}
                 </div>
+                `}
                 ${showActions ? `<div class="btn-group">
                     <button class="btn-complete" onclick="completeTask(${task.id})">やったよ！</button>
                     <button class="btn-tomorrow" onclick="postponeTask(${task.id})">明日やる</button>
