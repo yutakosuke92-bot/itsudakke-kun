@@ -236,6 +236,28 @@
             margin-top: 10px;
             padding-left: 10px;
             border-left: 3px solid var(--secondary-accent);
+            padding-right: 30px;
+            /* Space for delete button */
+        }
+
+        .btn-delete {
+            position: absolute;
+            top: 20px;
+            right: 15px;
+            background: transparent;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            padding: 5px;
+            width: auto;
+            opacity: 0.4;
+            transition: opacity 0.2s, color 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-delete:hover {
+            opacity: 1;
+            color: #ff6b6b;
         }
 
         .slider-section {
@@ -592,6 +614,7 @@
 
             card.innerHTML = `
                 ${task.category ? `<span class="category-label">${task.category}</span>` : ''}
+                <button class="btn-delete" onclick="deleteTask(${task.id})" title="削除">🗑️</button>
                 <span class="task-name">${task.name}</span>
                 <div class="task-meta">
                     次回目安: ${dateStr} 
@@ -649,6 +672,13 @@
             const t = tasks.find(x => x.id === id);
             const tmw = new Date(); tmw.setDate(tmw.getDate() + 1);
             t.nextDue = tmw.toISOString(); render();
+        }
+
+        function deleteTask(id) {
+            if (confirm("消去しますよ。いいですか？")) {
+                tasks = tasks.filter(t => t.id !== id);
+                render();
+            }
         }
 
         function showModal(id) {
