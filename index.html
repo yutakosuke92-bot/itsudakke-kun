@@ -75,9 +75,19 @@
         }
 
         h1 {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             color: var(--accent-color);
             margin-bottom: 5px;
+            line-height: 1.2;
+        }
+
+        h1 span {
+            display: block;
+        }
+
+        h1 .title-sub {
+            font-size: 1.2rem;
+            margin-top: 2px;
         }
 
         .subtitle {
@@ -393,7 +403,10 @@
 
 <body>
     <header>
-        <h1>家事の「いつだっけ？」解決くん</h1>
+        <h1>
+            <span>家事の「いつだっけ？」</span>
+            <span class="title-sub">解決くん</span>
+        </h1>
         <p class="subtitle" id="dynamic-subtitle">忘れても大丈夫、あなたは毎日頑張っています。 ✨</p>
         <div class="controls">
             <button class="icon-btn" onclick="setTheme('soft')" id="theme-soft" title="ふんわり">☀️</button>
@@ -594,6 +607,7 @@
                         style="touch-action: pan-y; cursor: grab;"
                         oninput="updateInterval(${task.id}, this.value)" 
                         onchange="render()"
+                        onpointerdown="event.stopPropagation()"
                         ontouchstart="event.stopPropagation()" 
                         ontouchmove="event.stopPropagation()" 
                         onmousedown="event.stopPropagation()">
