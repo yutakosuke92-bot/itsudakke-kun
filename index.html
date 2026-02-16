@@ -604,12 +604,15 @@
                         <span class="slider-value" id="val-${task.id}">${formatIntervalText(task.val, task.unit)}</span>
                     </div>
                     <input type="range" min="1" max="${maxVal}" value="${task.val}" 
+                        class="range-slider"
                         style="touch-action: pan-y; cursor: grab;"
                         oninput="updateInterval(${task.id}, this.value)" 
                         onchange="render()"
                         onpointerdown="event.stopPropagation()"
+                        onpointermove="event.stopPropagation()"
                         ontouchstart="event.stopPropagation()" 
                         ontouchmove="event.stopPropagation()" 
+                        ontouchend="event.stopPropagation()"
                         onmousedown="event.stopPropagation()">
                 </div>
                 ${showActions ? `<div class="btn-group">
@@ -682,6 +685,16 @@
         }
 
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
+
+        // Final protection against any swipe/gesture interference
+        ['touchstart', 'touchmove', 'touchend', 'pointerdown', 'pointermove'].forEach(evt => {
+            document.addEventListener(evt, (e) => {
+                if (e.target.classList && e.target.classList.contains('range-slider')) {
+                    e.stopPropagation();
+                }
+            }, { passive: true });
+        });
+
         setTheme(currentTheme); render();
     </script>
 </body>
