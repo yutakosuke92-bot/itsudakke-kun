@@ -345,7 +345,7 @@
             display: none;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            z-index: 2000;
             backdrop-filter: blur(8px);
         }
 
@@ -356,6 +356,7 @@
             width: 90%;
             max-width: 400px;
             text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
         }
 
         .form-group {
@@ -490,6 +491,25 @@
         </div>
     </div>
 
+    <!-- Privacy Alert Modal -->
+    <div id="alert-modal" class="modal-overlay" onclick="closeModal('alert-modal')">
+        <div class="modal-content slide-up" onclick="event.stopPropagation()">
+            <p id="alert-text" style="font-size: 1.1rem; margin-bottom: 25px; line-height: 1.6;"></p>
+            <button class="btn-complete" onclick="closeModal('alert-modal')">わかりました</button>
+        </div>
+    </div>
+
+    <!-- Privacy Confirm Modal -->
+    <div id="confirm-modal" class="modal-overlay">
+        <div class="modal-content slide-up">
+            <p id="confirm-text" style="font-size: 1.1rem; margin-bottom: 25px; line-height: 1.6;"></p>
+            <div class="btn-group">
+                <button class="btn-tomorrow" onclick="closeConfirm(false)">キャンセル</button>
+                <button class="btn-complete" onclick="closeConfirm(true)">OK</button>
+            </div>
+        </div>
+    </div>
+
     <div class="fab" id="fab-plus" onclick="showModal('add-modal')">+</div>
 
     <script>
@@ -564,7 +584,20 @@
         }
 
         async function toggleNotifications() {
-            alert('通知機能は現在準備中です。ホーム画面に追加してご利用いただくと、今後のアップデートで対応予定です☺️');
+            if (!('Notification' in window)) {
+                customAlert('お使いのブラウザは通知機能に対応していないようです 😢');
+                return;
+            }
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                customAlert('通知を許可していただき、ありがとうございます！\n期限が近づいた際に、このブラウザでお知らせします🌿');
+                new Notification('家事の「いつだっけ？」解決くん', {
+                    body: '通知の設定が完了しました。これからもよろしくお願いします☺️',
+                    icon: 'https://cdn-icons-png.flaticon.com/512/599/599370.png'
+                });
+            } else {
+                customAlert('通知はオフのままになっています。必要に応じてブラウザの設定から変更できますよ 🌿');
+            }
         }
 
         function switchView(viewName) {
@@ -675,10 +708,10 @@
         }
 
         function deleteTask(id) {
-            if (confirm("消去しますよ。いいですか？")) {
+            customConfirm("消去しますよ。いいですか？", () => {
                 tasks = tasks.filter(t => t.id !== id);
                 render();
-            }
+            });
         }
 
         function showModal(id) {
@@ -713,9 +746,44 @@
         }
 
         function resetTasks() {
-            if (confirm("家事リストを初期設定（20項目）に戻しますか？\n※ご自身で追加・変更した内容は消えてしまいます。")) {
+            customConfirm("家事リストを初期設定（20項目）に戻しますか？\n※ご自身で追加・変更した内容は消えてしまいます。", () => {
                 localStorage.removeItem('houseworkTasks');
                 location.reload();
+            });
+        }
+
+        // --- Privacy Modals ---
+        let confirmCallback = null;
+        function customAlert(msg) {
+            document.getElementById('alert-text').innerText = msg;
+            showModal('alert-modal');
+        }
+        function customConfirm(msg, callback) {
+            document.getElementById('confirm-text').innerText = msg;
+            confirmCallback = callback;
+            showModal('confirm-modal');
+        }
+        function closeConfirm(result) {
+            closeModal('confirm-modal');
+            if (result && confirmCallback) confirmCallback();
+            confirmCallback = null;
+        }
+
+        // --- Notification Logic ---
+        function checkDueTasksAndNotify() {
+            if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+            const today = new Date().toLocaleDateString('ja-JP');
+            const lastNotified = localStorage.getItem('lastNotifiedDate');
+            if (lastNotified === today) return; // Only notify once per day
+
+            const dueCount = tasks.filter(t => new Date(t.nextDue) <= new Date()).length;
+            if (dueCount > 0) {
+                new Notification('家事の「いつだっけ？」', {
+                    body: `${dueCount}件の家事がそろそろかもしれません。無理せず進めていきましょう 🌿`,
+                    icon: 'https://cdn-icons-png.flaticon.com/512/599/599370.png'
+                });
+                localStorage.setItem('lastNotifiedDate', today);
             }
         }
 
@@ -730,7 +798,10 @@
             }, { passive: true });
         });
 
-        setTheme(currentTheme); render();
+        setTheme(currentTheme);
+        render();
+        // Check for notifications slightly after load
+        setTimeout(checkDueTasksAndNotify, 2000);
     </script>
 </body>
 
